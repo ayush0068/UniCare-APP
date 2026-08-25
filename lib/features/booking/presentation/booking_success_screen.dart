@@ -10,6 +10,23 @@ class BookingSuccessScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final consultationType = appointment?['consultationType'] as String?;
     final totalAmount = appointment?['totalAmount'];
+    // Booking response includes _id (appointment id) + patientId{name,email}
+    // + doctorId{name} when this screen is reached straight from booking
+    // (not from the payment screen's own success redirect, which passes
+    // a lighter extra map — appointmentId will be null in that case,
+    // which is fine since payment is already done by then).
+    final appointmentId = appointment?['_id'] as String?;
+    final doctorName = (appointment?['doctorId'] is Map)
+        ? (appointment!['doctorId'] as Map)['name'] as String?
+        : null;
+    final patientName = (appointment?['patientId'] is Map)
+        ? (appointment!['patientId'] as Map)['name'] as String?
+        : null;
+    final patientEmail = (appointment?['patientId'] is Map)
+        ? (appointment!['patientId'] as Map)['email'] as String?
+        : null;
+    final paymentStatus = appointment?['paymentStatus'] as String?;
+    final needsPayment = appointmentId != null && paymentStatus == 'Pending';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -61,9 +78,29 @@ class BookingSuccessScreen extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 32),
+              if (needsPayment) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.push('/payment/$appointmentId', extra: {
+                      'amount': totalAmount,
+                      'doctorName': doctorName,
+                      'patientName': patientName,
+                      'patientEmail': patientEmail,
+                    }),
+                    child: const Text('Pay Now'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: needsPayment
+                    ? OutlinedButton(
+                  onPressed: () => context.go('/appointments'),
+                  child: const Text('Pay Later'),
+                )
+                    : ElevatedButton(
                   onPressed: () => context.go('/appointments'),
                   child: const Text('View My Appointments'),
                 ),
@@ -71,7 +108,7 @@ class BookingSuccessScreen extends StatelessWidget {
               const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton(
+                child: TextButton(
                   onPressed: () => context.go('/home'),
                   child: const Text('Back to Home'),
                 ),

@@ -8,6 +8,7 @@ import '../../features/doctors/presentation/doctor_list_screen.dart';
 import '../../features/doctors/presentation/doctor_detail_screen.dart';
 import '../../features/booking/presentation/booking_screen.dart';
 import '../../features/booking/presentation/booking_success_screen.dart';
+import '../../features/payments/presentation/payment_screen.dart';
 
 /// All navigation routes in one place.
 ///
@@ -44,6 +45,22 @@ final appRouter = GoRouter(
       builder: (context, state) => BookingSuccessScreen(
         appointment: state.extra as Map<String, dynamic>?,
       ),
+    ),
+
+    // --- Payments (Step 2 — Razorpay) ---
+    GoRoute(
+      path: '/payment/:appointmentId',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        return PaymentScreen(
+          appointmentId: state.pathParameters['appointmentId']!,
+          amount: (extra['amount'] as num?) ?? 0,
+          doctorName: extra['doctorName'] as String?,
+          patientName: extra['patientName'] as String?,
+          patientEmail: extra['patientEmail'] as String?,
+          patientPhone: extra['patientPhone'] as String?,
+        );
+      },
     ),
 
     // TODO: build these next, one feature at a time (see roadmap)
