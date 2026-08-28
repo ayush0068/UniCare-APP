@@ -1,76 +1,148 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'page_transitions.dart';
 import '../../features/splash/splash_screen.dart';
+import '../../features/first_launch/presentation/first_launch_screen.dart';
+import '../../features/onboarding/presentation/role_selection_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/patient_onboarding/presentation/patient_onboarding_screen.dart';
+import '../../features/auth/presentation/doctor_login_screen.dart';
+import '../../features/auth/presentation/doctor_register_screen.dart';
+import '../../features/doctor_onboarding/presentation/doctor_onboarding_screen.dart';
+import '../../features/doctor_onboarding/presentation/verification_pending_screen.dart';
+import '../../features/doctor_home/presentation/doctor_home_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/doctors/presentation/doctor_list_screen.dart';
 import '../../features/doctors/presentation/doctor_detail_screen.dart';
 import '../../features/booking/presentation/booking_screen.dart';
 import '../../features/booking/presentation/booking_success_screen.dart';
 import '../../features/payments/presentation/payment_screen.dart';
 
-/// All navigation routes in one place.
+/// All navigation routes in one place. Every route uses fadeSlidePage
+/// (see page_transitions.dart) for a smooth, modern feel instead of the
+/// default abrupt platform transition.
 ///
-/// Home is the default landing screen (not login). Splash runs first
-/// (checks stored JWT) then always lands on /home — HomeScreen decides
-/// what to show/gate based on auth status.
-///
-/// STEP 1 DONE: Doctor list -> Doctor detail -> Booking -> Success.
-/// Routes still marked "// TODO" below are referenced from HomeScreen's
-/// quick actions but aren't built yet — next steps in the roadmap.
+/// FLOW:
+/// Splash (animated) -> checks stored session:
+///   - no session          -> /role-selection
+///   - role patient/guest  -> /home
+///   - role doctor         -> /doctor/home
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
-        path: '/register', builder: (context, state) => const RegisterScreen()),
+      path: '/',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const SplashScreen()),
+    ),
+    GoRoute(
+      path: '/first-launch',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const FirstLaunchScreen()),
+    ),
+    GoRoute(
+      path: '/role-selection',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const RoleSelectionScreen()),
+    ),
 
-    // --- Doctors + Booking (Step 1) ---
-    GoRoute(path: '/doctors', builder: (context, state) => const DoctorListScreen()),
+    // --- Patient auth ---
+    GoRoute(
+      path: '/home',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const HomeScreen()),
+    ),
+    GoRoute(
+      path: '/login',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const LoginScreen()),
+    ),
+    GoRoute(
+      path: '/register',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const RegisterScreen()),
+    ),
+    GoRoute(
+      path: '/patient-onboarding',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const PatientOnboardingScreen()),
+    ),
+    GoRoute(
+      path: '/profile',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const ProfileScreen()),
+    ),
+
+    // --- Doctor auth + onboarding ---
+    GoRoute(
+      path: '/doctor-login',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorLoginScreen()),
+    ),
+    GoRoute(
+      path: '/doctor-register',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorRegisterScreen()),
+    ),
+    GoRoute(
+      path: '/doctor-onboarding',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorOnboardingScreen()),
+    ),
+    GoRoute(
+      path: '/doctor-pending-verification',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const VerificationPendingScreen()),
+    ),
+    GoRoute(
+      path: '/doctor/home',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorHomeScreen()),
+    ),
+
+    // --- Doctors + Booking (patient side) ---
+    GoRoute(
+      path: '/doctors',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorListScreen()),
+    ),
     GoRoute(
       path: '/doctors/:id',
-      builder: (context, state) =>
-          DoctorDetailScreen(doctorId: state.pathParameters['id']!),
+      pageBuilder: (context, state) => fadeSlidePage(
+        context, state,
+        DoctorDetailScreen(doctorId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/booking/:doctorId',
-      builder: (context, state) =>
-          BookingScreen(doctorId: state.pathParameters['doctorId']!),
+      pageBuilder: (context, state) => fadeSlidePage(
+        context, state,
+        BookingScreen(doctorId: state.pathParameters['doctorId']!),
+      ),
     ),
     GoRoute(
       path: '/booking-success',
-      builder: (context, state) => BookingSuccessScreen(
-        appointment: state.extra as Map<String, dynamic>?,
+      pageBuilder: (context, state) => fadeSlidePage(
+        context, state,
+        BookingSuccessScreen(appointment: state.extra as Map<String, dynamic>?),
       ),
     ),
 
-    // --- Payments (Step 2 — Razorpay) ---
+    // --- Payments (Razorpay) ---
     GoRoute(
       path: '/payment/:appointmentId',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final extra = state.extra as Map<String, dynamic>? ?? {};
-        return PaymentScreen(
-          appointmentId: state.pathParameters['appointmentId']!,
-          amount: (extra['amount'] as num?) ?? 0,
-          doctorName: extra['doctorName'] as String?,
-          patientName: extra['patientName'] as String?,
-          patientEmail: extra['patientEmail'] as String?,
-          patientPhone: extra['patientPhone'] as String?,
+        return fadeSlidePage(
+          context, state,
+          PaymentScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+            amount: (extra['amount'] as num?) ?? 0,
+            doctorName: extra['doctorName'] as String?,
+            patientName: extra['patientName'] as String?,
+            patientEmail: extra['patientEmail'] as String?,
+            patientPhone: extra['patientPhone'] as String?,
+          ),
         );
       },
     ),
 
     // TODO: build these next, one feature at a time (see roadmap)
-    // GoRoute(path: '/appointments', builder: (context, state) => const AppointmentsScreen()),
-    // GoRoute(path: '/consultation', builder: (context, state) => const ConsultationScreen()),
-    // GoRoute(path: '/ai-assistant', builder: (context, state) => const AiAssistantScreen()),
-    // GoRoute(path: '/prescriptions', builder: (context, state) => const PrescriptionsScreen()),
-    // GoRoute(path: '/aftercare', builder: (context, state) => const AftercareScreen()),
-    // GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
-    // GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+    // GoRoute(path: '/appointments', ...),
+    // GoRoute(path: '/consultation', ...),
+    // GoRoute(path: '/ai-assistant', ...),
+    // GoRoute(path: '/prescriptions', ...),
+    // GoRoute(path: '/aftercare', ...),
+    // GoRoute(path: '/notifications', ...),
+    // GoRoute(path: '/profile', ...),
   ],
 
   errorBuilder: (context, state) => Scaffold(

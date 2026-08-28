@@ -122,6 +122,59 @@ class _TopBar extends StatelessWidget {
   final WidgetRef ref;
   const _TopBar({required this.isLoggedIn, required this.ref});
 
+  void _showAccountSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_outline_rounded, color: AppColors.textPrimary),
+                title: const Text('My Profile'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push('/profile');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month_rounded, color: AppColors.textPrimary),
+                title: const Text('My Appointments'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push('/appointments');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
+                title: const Text('Log Out', style: TextStyle(color: AppColors.danger)),
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  await ref.read(authStateProvider.notifier).logout();
+                  if (context.mounted) context.go('/role-selection');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -157,7 +210,7 @@ class _TopBar extends StatelessWidget {
           icon: isLoggedIn ? Icons.person_outline_rounded : Icons.login_rounded,
           onTap: () {
             if (isLoggedIn) {
-              context.push('/profile');
+              _showAccountSheet(context, ref);
             } else {
               context.push('/login');
             }

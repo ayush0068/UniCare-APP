@@ -3,11 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/loading_indicator.dart';
+import '../../auth/domain/auth_provider.dart';
 import '../../doctors/domain/doctor_providers.dart';
 import '../domain/booking_provider.dart';
 import '../domain/slot_generator.dart';
 import 'widgets/date_picker_strip.dart';
 import 'widgets/slot_grid.dart';
+
+/// Guest booking surcharge — matches GUEST_SURCHARGE in the website's
+/// app/patient/booking/[doctorId]/page.tsx exactly.
+const int _guestSurcharge = 30;
+
+/// Video vs Voice Call price difference — matches the website's
+/// getConsultationPrice(): Voice Call is ₹100 cheaper than the doctor's
+/// listed (video) fee, floored at ₹0.
+num _consultationPrice(num doctorFees, String consultationType) {
+  final addon = consultationType == 'Voice Call' ? -100 : 0;
+  final price = doctorFees + addon;
+  return price < 0 ? 0 : price;
+}
 
 class BookingScreen extends ConsumerStatefulWidget {
   final String doctorId;
@@ -66,8 +80,12 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           final bookedSlotsAsync = ref.watch(
             bookedSlotsProvider((doctorId: widget.doctorId, date: _dateKey)),
           );
-          final platformFees = (doctor.fees * 0.1).ceil();
-          final totalAmount = doctor.fees + platformFees;
+          final roleAsync = ref.watch(currentRoleProvider);
+          final isGuest = roleAsync.value == 'guest';
+          final consultationFees = _consultationPrice(doctor.fees, _consultationType);
+          final platformFees =
+          consultationFees == 0 ? 0 : (consultationFees * 0.1).round();
+          final totalAmount = consultationFees + platformFees + (isGuest ? _guestSurcharge : 0);
 
           return Column(
             children: [
@@ -169,9 +187,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     ),
                     const SizedBox(height: 22),
                     _PriceSummaryCard(
-                      consultationFee: doctor.fees,
+                      consultationFee: consultationFees,
                       platformFee: platformFees,
                       total: totalAmount,
+                      isGuest: isGuest,
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -200,7 +219,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     slotEnd: _selectedSlot!.end,
                     consultationType: _consultationType,
                     symptoms: _symptomsController.text.trim(),
-                    consultationFees: doctor.fees,
+                    consultationFees: consultationFees,
                     platformFees: platformFees,
                     totalAmount: totalAmount,
                   );
@@ -325,10 +344,12 @@ class _PriceSummaryCard extends StatelessWidget {
   final num consultationFee;
   final num platformFee;
   final num total;
+  final bool isGuest;
   const _PriceSummaryCard({
     required this.consultationFee,
     required this.platformFee,
     required this.total,
+    required this.isGuest,
   });
 
   @override
@@ -344,13 +365,19 @@ class _PriceSummaryCard extends StatelessWidget {
           _row('Consultation fee', '₹${consultationFee.toStringAsFixed(0)}'),
           const SizedBox(height: 8),
           _row('Platform fee', '₹$platformFee'),
+          if (isGuest) ...[
+            const SizedBox(height: 8),
+            _row('Guest booking fee', '₹$_guestSurcharge'),
+          ],
           const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider()),
           _row('Total', '₹$total', bold: true),
-          const SizedBox(height: 8),
-          const Text(
-            'Final amount may differ based on your Parchi discount or guest surcharge.',
-            style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
-          ),
+          if (isGuest) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Create a free account to remove the guest fee and unlock loyalty discounts.',
+              style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+            ),
+          ],
         ],
       ),
     );

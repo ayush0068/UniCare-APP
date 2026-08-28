@@ -19,13 +19,11 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
-    required String phone,
   }) async {
     final data = await _authApi.patientRegister(
       name: name,
       email: email,
       password: password,
-      phone: phone,
     );
     await _persist(data);
   }
@@ -35,6 +33,15 @@ class AuthRepository {
     required String password,
   }) async {
     final data = await _authApi.doctorLogin(email: email, password: password);
+    await _persist(data);
+  }
+
+  Future<void> doctorRegister({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final data = await _authApi.doctorRegister(name: name, email: email, password: password);
     await _persist(data);
   }
 

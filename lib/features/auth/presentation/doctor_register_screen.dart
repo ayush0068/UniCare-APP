@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_colors.dart';
 import '../domain/auth_provider.dart';
 
-/// Matches the website's components/auth/AuthForm.tsx exactly — patient
-/// registration only collects name, email, and password. Everything else
-/// (phone, DOB, gender, blood group, emergency contact, medical history)
-/// is filled in afterwards from the Profile page, same as on the website.
-class RegisterScreen extends ConsumerStatefulWidget {
-  const RegisterScreen({super.key});
+class DoctorRegisterScreen extends ConsumerStatefulWidget {
+  const DoctorRegisterScreen({super.key});
 
   @override
-  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<DoctorRegisterScreen> createState() => _DoctorRegisterScreenState();
 }
 
-class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _agreeTerms = false;
 
   @override
   void dispose() {
@@ -30,17 +26,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _submit() {
-    if (!_agreeTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to the Terms & Privacy Policy')),
-      );
-      return;
-    }
     if (_formKey.currentState!.validate()) {
-      ref.read(authStateProvider.notifier).patientRegister(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+      ref.read(authStateProvider.notifier).doctorRegister(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
       );
     }
   }
@@ -52,9 +42,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     ref.listen(authStateProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
-        // Fresh registration -> profile is incomplete, so go straight
-        // into onboarding (matches website: register -> onboarding -> home).
-        context.go('/patient-onboarding');
+        // Fresh registration -> profile is incomplete and unverified,
+        // so go straight into the onboarding form (matches the website's
+        // flow: register -> onboarding -> pending admin verification).
+        context.go('/doctor-onboarding');
       }
       if (next.status == AuthStatus.error && next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -64,7 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(title: const Text('Doctor Registration')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -73,17 +64,36 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: AppColors.primaryDark, size: 20),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          "You'll set up your specialization, fees, and schedule right after this step.",
+                          style: TextStyle(fontSize: 12, color: AppColors.primaryDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Full Name', hintText: 'Arjun Sharma'),
-                  validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
+                  decoration: const InputDecoration(labelText: 'Full Name (Dr. ...)'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email', hintText: 'you@example.com'),
+                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (v) =>
                   (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                 ),
@@ -91,44 +101,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password', hintText: 'Min. 6 characters'),
+                  decoration: const InputDecoration(labelText: 'Password'),
                   validator: (v) => (v == null || v.length < 6)
                       ? 'Password must be at least 6 characters'
                       : null,
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _agreeTerms,
-                      onChanged: (v) => setState(() => _agreeTerms = v ?? false),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'I agree to the Terms of Service and Privacy Policy',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: isLoading ? null : _submit,
                   child: isLoading
                       ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                      : const Text('Register'),
+                      : const Text('Continue'),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () => context.go('/login'),
-                  child: const Text('Already have an account? Log in'),
+                  onPressed: () => context.go('/doctor-login'),
+                  child: const Text('Already registered? Log in'),
                 ),
               ],
             ),

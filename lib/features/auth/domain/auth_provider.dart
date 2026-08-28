@@ -1,7 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/storage/secure_storage.dart';
 import '../data/auth_repository.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository());
+
+/// Current session's role ('patient' | 'doctor' | 'guest' | null).
+/// Used wherever pricing or navigation needs to know if the signed-in
+/// user is a guest (e.g. booking's guest surcharge) vs a full patient/doctor.
+final currentRoleProvider = FutureProvider.autoDispose<String?>((ref) async {
+  ref.watch(authStateProvider); // re-fetch whenever auth state changes
+  return SecureStorage.getRole();
+});
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
@@ -14,9 +23,9 @@ class AuthState {
   const AuthState.initial() : this(status: AuthStatus.initial);
 
   AuthState copyWith({AuthStatus? status, String? errorMessage}) => AuthState(
-        status: status ?? this.status,
-        errorMessage: errorMessage,
-      );
+    status: status ?? this.status,
+    errorMessage: errorMessage,
+  );
 }
 
 /// Drives login/register screens + the splash screen's "am I logged in?"
@@ -51,7 +60,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String name,
     required String email,
     required String password,
-    required String phone,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
     try {
@@ -59,7 +67,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         name: name,
         email: email,
         password: password,
-        phone: phone,
       );
       state = state.copyWith(status: AuthStatus.authenticated);
     } catch (e) {
@@ -83,6 +90,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> doctorLogin(String email, String password) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      await _repository.doctorLogin(email: email, password: password);
+      state = state.copyWith(status: AuthStatus.authenticated);
+    } catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
+    }
+  }
+
+  Future<void> doctorRegister(String name, String email, String password) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      await _repository.doctorRegister(name: name, email: email, password: password);
+      state = state.copyWith(status: AuthStatus.authenticated);
+    } catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
+    }
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = state.copyWith(status: AuthStatus.unauthenticated);
@@ -90,5 +117,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(ref.read(authRepositoryProvider)),
+      (ref) => AuthNotifier(ref.read(authRepositoryProvider)),
 );

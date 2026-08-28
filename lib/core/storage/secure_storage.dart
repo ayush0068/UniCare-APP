@@ -34,4 +34,15 @@ class SecureStorage {
     await _storage.delete(key: _roleKey);
     await _storage.delete(key: _userIdKey);
   }
+
+  // --- First-launch consent (Terms, Privacy, permissions notice) ---
+  // Intentionally NOT cleared by clearSession()/logout — this is a
+  // one-time-per-install acknowledgment, not part of the user's session.
+  static const _acceptedTermsKey = 'accepted_terms_v1';
+
+  static Future<bool> hasAcceptedTerms() async =>
+      (await _storage.read(key: _acceptedTermsKey)) == 'true';
+
+  static Future<void> setAcceptedTerms() =>
+      _storage.write(key: _acceptedTermsKey, value: 'true');
 }

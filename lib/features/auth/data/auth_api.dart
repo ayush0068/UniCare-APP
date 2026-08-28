@@ -14,7 +14,7 @@ class AuthApi {
     required String password,
   }) async {
     final response = await _dioClient.safeRequest(
-      () => _dioClient.dio.post('/auth/patient/login', data: {
+          () => _dioClient.dio.post('/auth/patient/login', data: {
         'email': email,
         'password': password,
       }),
@@ -26,14 +26,12 @@ class AuthApi {
     required String name,
     required String email,
     required String password,
-    required String phone,
   }) async {
     final response = await _dioClient.safeRequest(
-      () => _dioClient.dio.post('/auth/patient/register', data: {
+          () => _dioClient.dio.post('/auth/patient/register', data: {
         'name': name,
         'email': email,
         'password': password,
-        'phone': phone,
       }),
     );
     return response.data['data'] as Map<String, dynamic>;
@@ -44,7 +42,31 @@ class AuthApi {
     required String password,
   }) async {
     final response = await _dioClient.safeRequest(
-      () => _dioClient.dio.post('/auth/doctor/login', data: {
+          () => _dioClient.dio.post('/auth/doctor/login', data: {
+        'email': email,
+        'password': password,
+      }),
+    );
+    return response.data['data'] as Map<String, dynamic>;
+  }
+
+  /// POST /api/auth/doctor/register
+  /// Only name/email/password are required at this stage — matches the
+  /// website's flow where the doctor completes specialization, fees,
+  /// hospital info, and availability afterwards via the onboarding form
+  /// (PUT /api/doctor/onboarding/update). The account stays isVerified:
+  /// false until an admin approves it, so /api/auth/doctor/login will be
+  /// blocked until then — but this register call itself already returns
+  /// a usable token, which is what lets a brand-new doctor go straight
+  /// into the onboarding form without logging in separately.
+  Future<Map<String, dynamic>> doctorRegister({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final response = await _dioClient.safeRequest(
+          () => _dioClient.dio.post('/auth/doctor/register', data: {
+        'name': name,
         'email': email,
         'password': password,
       }),
@@ -54,7 +76,7 @@ class AuthApi {
 
   Future<Map<String, dynamic>> guestLogin() async {
     final response = await _dioClient.safeRequest(
-      () => _dioClient.dio.post('/auth/guest/login'),
+          () => _dioClient.dio.post('/auth/guest/login'),
     );
     return response.data['data'] as Map<String, dynamic>;
   }
