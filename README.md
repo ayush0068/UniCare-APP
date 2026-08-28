@@ -1,4 +1,4 @@
-# unicare_app
+# UniCare-App
 
 A new Flutter project.
 
