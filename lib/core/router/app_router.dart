@@ -12,6 +12,8 @@ import '../../features/auth/presentation/doctor_register_screen.dart';
 import '../../features/doctor_onboarding/presentation/doctor_onboarding_screen.dart';
 import '../../features/doctor_onboarding/presentation/verification_pending_screen.dart';
 import '../../features/doctor_home/presentation/doctor_home_screen.dart';
+import '../../features/appointments/presentation/patient_dashboard_screen.dart';
+import '../../features/appointments/presentation/doctor_appointments_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/doctors/presentation/doctor_list_screen.dart';
@@ -87,6 +89,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/doctor/home',
       pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorHomeScreen()),
+    ),
+    GoRoute(
+      path: '/doctor/appointments',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const DoctorAppointmentsScreen()),
+    ),
+    GoRoute(
+      path: '/appointments',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const PatientDashboardScreen()),
     ),
 
     // --- Doctors + Booking (patient side) ---

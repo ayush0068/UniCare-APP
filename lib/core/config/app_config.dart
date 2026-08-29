@@ -12,4 +12,10 @@ class AppConfig {
   /// Backend root without the /api suffix, used for the /health check.
   static String get serverRootUrl =>
       apiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
+
+  /// ZegoCloud credentials for video/voice consultations — same
+  /// NEXT_PUBLIC_ZEGOCLOUD_APP_ID / SERVER_SECRET pair the website uses
+  /// (test-mode token generation, matching AppointmentCall.tsx exactly).
+  static int get zegoAppId => int.tryParse(dotenv.env['ZEGOCLOUD_APP_ID'] ?? '') ?? 0;
+  static String get zegoAppSign => dotenv.env['ZEGOCLOUD_APP_SIGN'] ?? '';
 }
