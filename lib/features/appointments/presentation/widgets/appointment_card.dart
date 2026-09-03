@@ -14,7 +14,6 @@ class AppointmentCard extends StatelessWidget {
   final bool isDoctorView;
   final VoidCallback? onJoinCall;
   final VoidCallback? onMarkCancelled;
-  final VoidCallback? onMarkCompleted;
   final VoidCallback? onViewPrescription;
   final VoidCallback? onPayNow;
 
@@ -24,7 +23,6 @@ class AppointmentCard extends StatelessWidget {
     required this.isDoctorView,
     this.onJoinCall,
     this.onMarkCancelled,
-    this.onMarkCompleted,
     this.onViewPrescription,
     this.onPayNow,
   });
@@ -139,13 +137,6 @@ class AppointmentCard extends StatelessWidget {
                   color: AppColors.accentBlue,
                   onTap: onPayNow!,
                 ),
-              if (isDoctorView && appointment.status == 'In Progress' && onMarkCompleted != null)
-                _ActionButton(
-                  icon: Icons.check_circle_outline_rounded,
-                  label: 'Mark Completed',
-                  color: AppColors.success,
-                  onTap: onMarkCompleted!,
-                ),
               if (isDoctorView && appointment.canMarkCancelled && onMarkCancelled != null)
                 _ActionButton(
                   icon: Icons.cancel_outlined,
@@ -156,7 +147,7 @@ class AppointmentCard extends StatelessWidget {
               if (appointment.status == 'Completed' && appointment.prescription.isNotEmpty && onViewPrescription != null)
                 _ActionButton(
                   icon: Icons.description_outlined,
-                  label: 'Prescription',
+                  label: 'View Report',
                   color: AppColors.textPrimary,
                   onTap: onViewPrescription!,
                 ),

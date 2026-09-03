@@ -14,6 +14,9 @@ import '../../features/doctor_onboarding/presentation/verification_pending_scree
 import '../../features/doctor_home/presentation/doctor_home_screen.dart';
 import '../../features/appointments/presentation/patient_dashboard_screen.dart';
 import '../../features/appointments/presentation/doctor_appointments_screen.dart';
+import '../../features/consultation/presentation/consultation_screen.dart';
+import '../../features/prescription/presentation/prescription_form_screen.dart';
+import '../../features/prescription/presentation/prescription_view_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/doctors/presentation/doctor_list_screen.dart';
@@ -97,6 +100,33 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/appointments',
       pageBuilder: (context, state) => fadeSlidePage(context, state, const PatientDashboardScreen()),
+    ),
+    GoRoute(
+      path: '/consultation/:appointmentId',
+      pageBuilder: (context, state) => fadeSlidePage(
+        context, state,
+        ConsultationScreen(appointmentId: state.pathParameters['appointmentId']!),
+      ),
+    ),
+    GoRoute(
+      path: '/prescription/new/:appointmentId',
+      pageBuilder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        return fadeSlidePage(
+          context, state,
+          PrescriptionFormScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+            patientName: extra['patientName'] as String? ?? 'the patient',
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/prescription/view/:appointmentId',
+      pageBuilder: (context, state) => fadeSlidePage(
+        context, state,
+        PrescriptionViewScreen(appointmentId: state.pathParameters['appointmentId']!),
+      ),
     ),
 
     // --- Doctors + Booking (patient side) ---

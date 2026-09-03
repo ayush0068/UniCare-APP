@@ -45,6 +45,10 @@ dependencies:
   flutter_form_builder: ^11.0.0
   form_builder_validators: ^11.0.0
 
+  # --- Video/voice consultations (ZegoCloud) ---
+  zego_uikit_prebuilt_call: 4.16.20
+  flutter_callkit_incoming: ^3.1.5
+
   # --- UI niceties (optional but commonly used) ---
   flutter:
     sdk: flutter
@@ -86,6 +90,7 @@ flutter_launcher_icons:
   android: true
   image_path: "assets/icon/unicare_icon.png"
 
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -117,3 +122,25 @@ flutter_launcher_icons:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
+dependency_overrides:
+  flutter_callkit_incoming_yoer:
+    path: third_party/flutter_callkit_incoming_yoer
+  zego_zim:
+    path: third_party/zego_zim
+  floating:
+    path: third_party/floating
+  vibration:
+    path: third_party/vibration
+  zego_express_engine:
+    path: third_party/zego_express_engine
+  zego_uikit:
+    path: third_party/zego_uikit
+  zego_plugin_adapter: 2.13.5
+  zego_uikit_signaling_plugin: 2.8.8
+  zego_zpns: 2.6.0+3
+  zego_callkit: 1.0.0+4
+  file_picker: 10.3.10
+  flutter_ringtone_player:
+    path: third_party/flutter_ringtone_player
+  flutter_volume_controller:
+    path: third_party/flutter_volume_controller

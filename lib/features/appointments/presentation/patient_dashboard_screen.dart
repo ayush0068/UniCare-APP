@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/loading_indicator.dart';
-import '../data/appointment_model.dart';
 import '../domain/appointment_providers.dart';
 import 'widgets/appointment_card.dart';
 import 'widgets/appointments_empty_state.dart';
@@ -111,7 +110,7 @@ class _PatientDashboardScreenState extends ConsumerState<PatientDashboardScreen>
                           onPayNow: () => context.push('/payment/${appt.id}', extra: {
                             'amount': appt.totalAmount,
                           }),
-                          onViewPrescription: () => _showPrescription(context, appt),
+                          onViewPrescription: () => context.push('/prescription/view/${appt.id}'),
                         );
                       },
                     ),
@@ -120,28 +119,6 @@ class _PatientDashboardScreenState extends ConsumerState<PatientDashboardScreen>
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _showPrescription(BuildContext context, AppointmentModel appt) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Prescription', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-              const SizedBox(height: 12),
-              Text(appt.prescription, style: const TextStyle(fontSize: 13, height: 1.5)),
-            ],
-          ),
         ),
       ),
     );

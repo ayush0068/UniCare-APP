@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/loading_indicator.dart';
 import '../data/appointment_api.dart';
-import '../data/appointment_model.dart';
 import '../domain/appointment_providers.dart';
 import 'widgets/appointment_card.dart';
 import 'widgets/appointments_empty_state.dart';
@@ -55,26 +54,8 @@ class _DoctorAppointmentsScreenState extends ConsumerState<DoctorAppointmentsScr
     );
   }
 
-  void _showPrescription(BuildContext context, AppointmentModel appt) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Prescription', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-              const SizedBox(height: 12),
-              Text(appt.prescription, style: const TextStyle(fontSize: 13, height: 1.5)),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _showPrescription(BuildContext context, String appointmentId) {
+    context.push('/prescription/view/$appointmentId');
   }
 
   @override
@@ -159,9 +140,8 @@ class _DoctorAppointmentsScreenState extends ConsumerState<DoctorAppointmentsScr
                           appointment: appt,
                           isDoctorView: true,
                           onJoinCall: _updating ? null : () => context.push('/consultation/${appt.id}'),
-                          onMarkCompleted: _updating ? null : () => _updateStatus(appt.id, 'Completed'),
                           onMarkCancelled: _updating ? null : () => _confirmCancel(context, appt.id),
-                          onViewPrescription: () => _showPrescription(context, appt),
+                          onViewPrescription: () => _showPrescription(context, appt.id),
                         );
                       },
                     ),
