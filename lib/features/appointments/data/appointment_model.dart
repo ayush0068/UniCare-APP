@@ -54,6 +54,27 @@ class AppointmentModel {
   bool get canMarkCancelled =>
       status == 'Scheduled' && DateTime.now().isAfter(slotStart);
 
+  // Robustly parses slotStartIso/slotEndIso. These are stored on the
+  // backend as a plain String (not a real Date), and different clients
+  // have historically sent different formats:
+  //   - standard ISO 8601 (what the website sends, and what this app
+  //     now sends too) — e.g. "2025-09-04T06:20:00.000Z"
+  //   - an older JS `Date.toString()`-style string some legacy
+  //     bookings may still have — e.g. "Wed Sep 04 2025 11:50:00 GMT+0530"
+  // DateTime.parse() handles the first natively; we fall back to the
+  // old custom format only if that fails, so existing appointments
+  // booked before this fix keep working.
+  static DateTime _parseSlotDate(String value) {
+    try {
+      return DateTime.parse(value).toLocal();
+    } catch (_) {
+      return DateFormat(
+        "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
+        'en_US',
+      ).parse(value, true).toLocal();
+    }
+  }
+
   factory AppointmentModel.fromJson(
       Map<String, dynamic> json, {
         required bool viewedByDoctor,
@@ -65,16 +86,8 @@ class AppointmentModel {
     return AppointmentModel(
       id: json['_id'] as String,
 
-      // Fixed date parsing
-      slotStart: DateFormat(
-        "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
-        'en_US',
-      ).parse(json['slotStartIso'] as String, true),
-
-      slotEnd: DateFormat(
-        "EEE MMM dd yyyy HH:mm:ss 'GMT'Z",
-        'en_US',
-      ).parse(json['slotEndIso'] as String, true),
+      slotStart: _parseSlotDate(json['slotStartIso'] as String),
+      slotEnd: _parseSlotDate(json['slotEndIso'] as String),
 
       consultationType:
       json['consultationType'] as String? ?? 'Video Consultation',

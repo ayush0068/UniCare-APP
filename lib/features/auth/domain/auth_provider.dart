@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/secure_storage.dart';
+import '../../consultation/data/call_signaling_service.dart';
 import '../data/auth_repository.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository());
@@ -41,6 +43,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(
       status: loggedIn ? AuthStatus.authenticated : AuthStatus.unauthenticated,
     );
+    if (loggedIn) {
+      // Fire-and-forget: connects the call-signaling socket so incoming
+      // calls can ring even before the user opens any consultation
+      // screen. Safe to call repeatedly — it reuses an open connection.
+      unawaited(CallSignalingService.instance.connect());
+    }
   }
 
   Future<void> patientLogin(String email, String password) async {
@@ -48,6 +56,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.patientLogin(email: email, password: password);
       state = state.copyWith(status: AuthStatus.authenticated);
+      unawaited(CallSignalingService.instance.connect());
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -69,6 +78,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       state = state.copyWith(status: AuthStatus.authenticated);
+      unawaited(CallSignalingService.instance.connect());
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -82,6 +92,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.guestLogin();
       state = state.copyWith(status: AuthStatus.authenticated);
+      unawaited(CallSignalingService.instance.connect());
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -95,6 +106,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.doctorLogin(email: email, password: password);
       state = state.copyWith(status: AuthStatus.authenticated);
+      unawaited(CallSignalingService.instance.connect());
     } catch (e) {
       state = state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
     }
@@ -105,6 +117,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.doctorRegister(name: name, email: email, password: password);
       state = state.copyWith(status: AuthStatus.authenticated);
+      unawaited(CallSignalingService.instance.connect());
     } catch (e) {
       state = state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
     }
@@ -112,6 +125,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _repository.logout();
+    CallSignalingService.instance.disconnect();
     state = state.copyWith(status: AuthStatus.unauthenticated);
   }
 }

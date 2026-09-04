@@ -31,9 +31,16 @@ class AppointmentApi {
     final response = await _dioClient.safeRequest(
           () => _dioClient.dio.post('/appointment/book', data: {
         'doctorId': doctorId,
-        'date': slotStart.toIso8601String(),
-        'slotStartIso': slotStart.toIso8601String(),
-        'slotEndIso': slotEnd.toIso8601String(),
+        // .toUtc() before serializing: without this, toIso8601String()
+        // on a *local* DateTime omits any timezone marker (no 'Z', no
+        // offset), so anything reading it back — including our own
+        // AppointmentModel.fromJson — can't tell what timezone the
+        // stored time is in. Converting to UTC first produces a
+        // standard, unambiguous ISO 8601 string (e.g. ends in 'Z'),
+        // matching exactly what the website already sends.
+        'date': slotStart.toUtc().toIso8601String(),
+        'slotStartIso': slotStart.toUtc().toIso8601String(),
+        'slotEndIso': slotEnd.toUtc().toIso8601String(),
         'consultationType': consultationType,
         'symptoms': symptoms,
         'consultationFees': consultationFees,

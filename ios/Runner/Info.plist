@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>UniCare+ needs camera access for video consultations with your doctor/patient.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>UniCare+ needs microphone access for audio/video consultations.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

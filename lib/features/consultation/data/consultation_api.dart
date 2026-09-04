@@ -5,8 +5,10 @@ class ConsultationApi {
   final _dioClient = DioClient();
 
   /// GET /api/appointment/join/:id
-  /// Marks the appointment "In Progress" and returns the ZegoCloud
-  /// room ID + the full populated appointment (patient/doctor names).
+  /// Marks the appointment "In Progress" and returns a room ID + the
+  /// full populated appointment (patient/doctor names). The room ID is
+  /// used as the WebRTC signaling room — no change needed on the
+  /// backend for this endpoint.
   Future<Map<String, dynamic>> joinConsultation(String appointmentId) async {
     final response = await _dioClient.safeRequest(
           () => _dioClient.dio.get('/appointment/join/$appointmentId'),

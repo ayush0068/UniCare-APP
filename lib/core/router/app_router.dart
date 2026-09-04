@@ -34,7 +34,15 @@ import '../../features/payments/presentation/payment_screen.dart';
 ///   - no session          -> /role-selection
 ///   - role patient/guest  -> /home
 ///   - role doctor         -> /doctor/home
+
+/// Root navigator key, also handed to [GoRouter] below. This lets
+/// screens/services that sit outside the widget currently on top of the
+/// stack (like the app-wide incoming-call overlay) push full-screen
+/// routes — e.g. the ringing screen — no matter which page is showing.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/',
   routes: [
     GoRoute(

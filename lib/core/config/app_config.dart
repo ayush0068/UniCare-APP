@@ -9,13 +9,13 @@ class AppConfig {
   static String get apiBaseUrl =>
       dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000/api';
 
-  /// Backend root without the /api suffix, used for the /health check.
+  /// Backend root without the /api suffix, used for the /health check
+  /// and as the Socket.IO signaling endpoint for in-app calls.
   static String get serverRootUrl =>
       apiBaseUrl.replaceAll(RegExp(r'/api/?$'), '');
 
-  /// ZegoCloud credentials for video/voice consultations — same
-  /// NEXT_PUBLIC_ZEGOCLOUD_APP_ID / SERVER_SECRET pair the website uses
-  /// (test-mode token generation, matching AppointmentCall.tsx exactly).
-  static int get zegoAppId => int.tryParse(dotenv.env['ZEGOCLOUD_APP_ID'] ?? '') ?? 0;
-  static String get zegoAppSign => dotenv.env['ZEGOCLOUD_APP_SIGN'] ?? '';
+  /// Socket.IO signaling server URL for doctor/patient calling. Defaults
+  /// to the same host as the REST API — override with SOCKET_URL in .env
+  /// if signaling is served from a different host/port.
+  static String get socketUrl => dotenv.env['SOCKET_URL'] ?? serverRootUrl;
 }
