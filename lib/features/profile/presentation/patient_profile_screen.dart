@@ -162,7 +162,7 @@ class _PatientProfileScreenState extends ConsumerState<PatientProfileScreen> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
                 children: [
                   _ProfileHeader(name: _nameController.text, ucId: _ucId, email: _email),
                   const SizedBox(height: 22),

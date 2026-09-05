@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class AppointmentsEmptyState extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String title;
   final String description;
   final VoidCallback? onBook;
 
   const AppointmentsEmptyState({
     super.key,
-    required this.emoji,
+    required this.icon,
     required this.title,
     required this.description,
     this.onBook,
@@ -21,7 +21,11 @@ class AppointmentsEmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 48),
       child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 40)),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(color: AppColors.surfaceMuted, shape: BoxShape.circle),
+            child: Icon(icon, size: 32, color: AppColors.textMuted),
+          ),
           const SizedBox(height: 14),
           Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           const SizedBox(height: 6),

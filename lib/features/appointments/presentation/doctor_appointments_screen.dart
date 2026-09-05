@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/loading_indicator.dart';
+import '../../home/presentation/widgets/pill_nav_overlay.dart';
 import '../data/appointment_api.dart';
 import '../domain/appointment_providers.dart';
 import 'widgets/appointment_card.dart';
@@ -64,92 +65,95 @@ class _DoctorAppointmentsScreenState extends ConsumerState<DoctorAppointmentsScr
     final pastAsync = ref.watch(doctorAppointmentsProvider(AppointmentTab.past));
     final activeAsync = ref.watch(doctorAppointmentsProvider(_activeTab));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Appointments')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _TabButton(
-                      label: 'Upcoming',
-                      count: upcomingAsync.value?.length ?? 0,
-                      isActive: _activeTab == AppointmentTab.upcoming,
-                      onTap: () => setState(() => _activeTab = AppointmentTab.upcoming),
+    return PillNavOverlay(
+      currentIndex: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: const Text('Appointments')),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _TabButton(
+                        label: 'Upcoming',
+                        count: upcomingAsync.value?.length ?? 0,
+                        isActive: _activeTab == AppointmentTab.upcoming,
+                        onTap: () => setState(() => _activeTab = AppointmentTab.upcoming),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _TabButton(
-                      label: 'Past',
-                      count: pastAsync.value?.length ?? 0,
-                      isActive: _activeTab == AppointmentTab.past,
-                      onTap: () => setState(() => _activeTab = AppointmentTab.past),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _TabButton(
+                        label: 'Past',
+                        count: pastAsync.value?.length ?? 0,
+                        isActive: _activeTab == AppointmentTab.past,
+                        onTap: () => setState(() => _activeTab = AppointmentTab.past),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: activeAsync.when(
-                loading: () => const LoadingIndicator(),
-                error: (e, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(e.toString(), textAlign: TextAlign.center),
-                        const SizedBox(height: 12),
-                        OutlinedButton(
-                          onPressed: () => ref.invalidate(doctorAppointmentsProvider(_activeTab)),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
-                data: (appointments) {
-                  if (appointments.isEmpty) {
-                    return SingleChildScrollView(
-                      child: AppointmentsEmptyState(
-                        emoji: _activeTab == AppointmentTab.upcoming ? '📅' : '📋',
-                        title: _activeTab == AppointmentTab.upcoming
-                            ? 'No Upcoming Appointments'
-                            : 'No Past Appointments',
-                        description: _activeTab == AppointmentTab.upcoming
-                            ? "You don't have any scheduled consultations."
-                            : 'Your completed consultations will appear here.',
+              ),
+              Expanded(
+                child: activeAsync.when(
+                  loading: () => const LoadingIndicator(),
+                  error: (e, _) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(e.toString(), textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () => ref.invalidate(doctorAppointmentsProvider(_activeTab)),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  data: (appointments) {
+                    if (appointments.isEmpty) {
+                      return SingleChildScrollView(
+                        child: AppointmentsEmptyState(
+                          icon: _activeTab == AppointmentTab.upcoming ? Icons.event_available_rounded : Icons.history_rounded,
+                          title: _activeTab == AppointmentTab.upcoming
+                              ? 'No Upcoming Appointments'
+                              : 'No Past Appointments',
+                          description: _activeTab == AppointmentTab.upcoming
+                              ? "You don't have any scheduled consultations."
+                              : 'Your completed consultations will appear here.',
+                        ),
+                      );
+                    }
+                    return RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: () async => ref.invalidate(doctorAppointmentsProvider(_activeTab)),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 110),
+                        itemCount: appointments.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, i) {
+                          final appt = appointments[i];
+                          return AppointmentCard(
+                            appointment: appt,
+                            isDoctorView: true,
+                            onJoinCall: _updating ? null : () => context.push('/consultation/${appt.id}'),
+                            onMarkCancelled: _updating ? null : () => _confirmCancel(context, appt.id),
+                            onViewPrescription: () => _showPrescription(context, appt.id),
+                          );
+                        },
                       ),
                     );
-                  }
-                  return RefreshIndicator(
-                    color: AppColors.primary,
-                    onRefresh: () async => ref.invalidate(doctorAppointmentsProvider(_activeTab)),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                      itemCount: appointments.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, i) {
-                        final appt = appointments[i];
-                        return AppointmentCard(
-                          appointment: appt,
-                          isDoctorView: true,
-                          onJoinCall: _updating ? null : () => context.push('/consultation/${appt.id}'),
-                          onMarkCancelled: _updating ? null : () => _confirmCancel(context, appt.id),
-                          onViewPrescription: () => _showPrescription(context, appt.id),
-                        );
-                      },
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,22 +1,24 @@
+import 'package:flutter/material.dart';
+
 /// TEMPORARY placeholder data so the home page has something to show.
 /// Once we build the doctor-discovery API call (/api/doctor/list), this
 /// file goes away and DoctorCard gets fed real data from the backend.
 
 class SpecialtyItem {
   final String label;
-  final String emoji;
-  const SpecialtyItem(this.label, this.emoji);
+  final IconData icon;
+  const SpecialtyItem(this.label, this.icon);
 }
 
 const List<SpecialtyItem> mockSpecialties = [
-  SpecialtyItem('General', '🩺'),
-  SpecialtyItem('Cardiology', '❤️'),
-  SpecialtyItem('Dermatology', '🧴'),
-  SpecialtyItem('Pediatrics', '🧸'),
-  SpecialtyItem('Orthopedic', '🦴'),
-  SpecialtyItem('Neurology', '🧠'),
-  SpecialtyItem('Dental', '🦷'),
-  SpecialtyItem('ENT', '👂'),
+  SpecialtyItem('General', Icons.local_hospital_rounded),
+  SpecialtyItem('Cardiology', Icons.favorite_rounded),
+  SpecialtyItem('Dermatology', Icons.face_retouching_natural_rounded),
+  SpecialtyItem('Pediatrics', Icons.child_friendly_rounded),
+  SpecialtyItem('Orthopedic', Icons.accessibility_new_rounded),
+  SpecialtyItem('Neurology', Icons.psychology_rounded),
+  SpecialtyItem('Dental', Icons.medical_information_rounded),
+  SpecialtyItem('ENT', Icons.hearing_rounded),
 ];
 
 class MockDoctor {

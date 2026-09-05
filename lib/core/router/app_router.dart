@@ -18,6 +18,7 @@ import '../../features/consultation/presentation/consultation_screen.dart';
 import '../../features/prescription/presentation/prescription_form_screen.dart';
 import '../../features/prescription/presentation/prescription_view_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/help_center/presentation/help_center_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/doctors/presentation/doctor_list_screen.dart';
 import '../../features/doctors/presentation/doctor_detail_screen.dart';
@@ -78,6 +79,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/profile',
       pageBuilder: (context, state) => fadeSlidePage(context, state, const ProfileScreen()),
+    ),
+    GoRoute(
+      path: '/help-center',
+      pageBuilder: (context, state) => fadeSlidePage(context, state, const HelpCenterScreen()),
     ),
 
     // --- Doctor auth + onboarding ---

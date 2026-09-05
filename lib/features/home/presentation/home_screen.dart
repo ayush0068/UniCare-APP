@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/domain/auth_provider.dart';
 import '../data/mock_home_data.dart';
 import 'widgets/doctor_card.dart';
+import 'widgets/pill_nav_overlay.dart';
 import 'widgets/quick_action_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/specialty_chip.dart';
@@ -14,6 +15,10 @@ import 'widgets/specialty_chip.dart';
 /// users see their name. Every action that actually needs an account
 /// (booking, video call, prescriptions) should route through
 /// `_requireLogin()` below before navigating further.
+///
+/// A floating premium pill nav bar sits over the bottom of the screen
+/// for quick access to Home / Profile / Appointments / Help Center —
+/// tapping anything other than Home navigates to that full screen.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -31,85 +36,88 @@ class HomeScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final isLoggedIn = authState.status == AuthStatus.authenticated;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: () async {
-            // TODO: refresh doctor list / notifications once wired to backend
-            await Future.delayed(const Duration(milliseconds: 600));
-          },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-            children: [
-              _TopBar(isLoggedIn: isLoggedIn, ref: ref),
-              const SizedBox(height: 20),
-              _SearchBar(
-                onTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
-              ),
-              const SizedBox(height: 20),
-              if (!isLoggedIn) ...[
-                _GuestBanner(onLoginTap: () => context.push('/login')),
+    return PillNavOverlay(
+      currentIndex: 0,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              // TODO: refresh doctor list / notifications once wired to backend
+              await Future.delayed(const Duration(milliseconds: 600));
+            },
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+              children: [
+                _TopBar(isLoggedIn: isLoggedIn, ref: ref),
                 const SizedBox(height: 20),
+                _SearchBar(
+                  onTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
+                ),
+                const SizedBox(height: 20),
+                if (!isLoggedIn) ...[
+                  _GuestBanner(onLoginTap: () => context.push('/login')),
+                  const SizedBox(height: 20),
+                ],
+                _HeroBanner(
+                  onBookTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
+                ),
+                const SizedBox(height: 24),
+                Text('Quick actions', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                _QuickActionsGrid(
+                  onAction: (route) => _requireLogin(context, ref, () => context.push(route)),
+                ),
+                const SizedBox(height: 26),
+                SectionHeader(
+                  title: 'Browse by specialty',
+                  onSeeAll: () => _requireLogin(context, ref, () => context.push('/doctors')),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 92,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: mockSpecialties.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, i) {
+                      final s = mockSpecialties[i];
+                      return SpecialtyChip(
+                        icon: s.icon,
+                        label: s.label,
+                        onTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 26),
+                SectionHeader(
+                  title: 'Top doctors',
+                  onSeeAll: () => _requireLogin(context, ref, () => context.push('/doctors')),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 168,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: mockDoctors.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (context, i) {
+                      final doc = mockDoctors[i];
+                      return DoctorCard(
+                        doctor: doc,
+                        onTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 26),
+                _EmergencyCard(
+                  onTap: () => _requireLogin(context, ref, () => context.push('/consultation')),
+                ),
               ],
-              _HeroBanner(
-                onBookTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
-              ),
-              const SizedBox(height: 24),
-              Text('Quick actions', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 12),
-              _QuickActionsGrid(
-                onAction: (route) => _requireLogin(context, ref, () => context.push(route)),
-              ),
-              const SizedBox(height: 26),
-              SectionHeader(
-                title: 'Browse by specialty',
-                onSeeAll: () => _requireLogin(context, ref, () => context.push('/doctors')),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 92,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: mockSpecialties.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (context, i) {
-                    final s = mockSpecialties[i];
-                    return SpecialtyChip(
-                      emoji: s.emoji,
-                      label: s.label,
-                      onTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 26),
-              SectionHeader(
-                title: 'Top doctors',
-                onSeeAll: () => _requireLogin(context, ref, () => context.push('/doctors')),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 168,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: mockDoctors.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, i) {
-                    final doc = mockDoctors[i];
-                    return DoctorCard(
-                      doctor: doc,
-                      onTap: () => _requireLogin(context, ref, () => context.push('/doctors')),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 26),
-              _EmergencyCard(
-                onTap: () => _requireLogin(context, ref, () => context.push('/consultation')),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -160,6 +168,14 @@ class _TopBar extends StatelessWidget {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.help_outline_rounded, color: AppColors.textPrimary),
+                title: const Text('Help Center'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push('/help-center');
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
                 title: const Text('Log Out', style: TextStyle(color: AppColors.danger)),
                 onTap: () async {
@@ -183,9 +199,17 @@ class _TopBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isLoggedIn ? 'Hi there 👋' : 'Welcome to',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              Row(
+                children: [
+                  Text(
+                    isLoggedIn ? 'Hi there' : 'Welcome to',
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  if (isLoggedIn) ...[
+                    const SizedBox(width: 5),
+                    const Icon(Icons.waving_hand, size: 14, color: Color(0xFFF59E0B)),
+                  ],
+                ],
               ),
               const SizedBox(height: 2),
               Text(

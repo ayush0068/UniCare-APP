@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/loading_indicator.dart';
 import '../../auth/domain/auth_provider.dart';
+import '../../home/presentation/widgets/pill_nav_overlay.dart';
 import 'doctor_profile_screen.dart';
 import 'patient_profile_screen.dart';
 
@@ -15,13 +16,16 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final roleAsync = ref.watch(currentRoleProvider);
 
-    return roleAsync.when(
-      loading: () => const Scaffold(body: LoadingIndicator()),
-      error: (e, _) => Scaffold(body: Center(child: Text('Could not load profile: $e'))),
-      data: (role) {
-        if (role == 'doctor') return DoctorProfileScreen();
-        return PatientProfileScreen();
-      },
+    return PillNavOverlay(
+      currentIndex: 1,
+      child: roleAsync.when(
+        loading: () => const Scaffold(body: LoadingIndicator()),
+        error: (e, _) => Scaffold(body: Center(child: Text('Could not load profile: $e'))),
+        data: (role) {
+          if (role == 'doctor') return DoctorProfileScreen();
+          return PatientProfileScreen();
+        },
+      ),
     );
   }
 }

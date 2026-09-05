@@ -6,6 +6,7 @@ import '../../../core/widgets/loading_indicator.dart';
 import '../../appointments/data/appointment_model.dart';
 import '../../appointments/presentation/widgets/appointment_card.dart';
 import '../../auth/domain/auth_provider.dart';
+import '../../home/presentation/widgets/pill_nav_overlay.dart';
 import '../data/doctor_dashboard_api.dart';
 
 final _doctorDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
@@ -24,144 +25,147 @@ class DoctorHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(_doctorDashboardProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month_rounded),
-            tooltip: 'Appointments',
-            onPressed: () => context.push('/doctor/appointments'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded),
-            onPressed: () => context.push('/profile'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: () async {
-              await ref.read(authStateProvider.notifier).logout();
-              if (context.mounted) context.go('/');
-            },
-          ),
-        ],
-      ),
-      body: dashboardAsync.when(
-        loading: () => const LoadingIndicator(),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(e.toString(), textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () => ref.invalidate(_doctorDashboardProvider),
-                  child: const Text('Retry'),
-                ),
-              ],
+    return PillNavOverlay(
+      currentIndex: 0,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Dashboard'),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.calendar_month_rounded),
+              tooltip: 'Appointments',
+              onPressed: () => context.push('/doctor/appointments'),
             ),
-          ),
+            IconButton(
+              icon: const Icon(Icons.person_outline_rounded),
+              onPressed: () => context.push('/profile'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout_rounded),
+              onPressed: () async {
+                await ref.read(authStateProvider.notifier).logout();
+                if (context.mounted) context.go('/');
+              },
+            ),
+          ],
         ),
-        data: (data) {
-          final doctor = data['doctor'] as Map<String, dynamic>?;
-          final stats = data['stats'] as Map<String, dynamic>?;
-          final isVerified = doctor?['isVerified'] == true;
-          final todayAppointments = (data['todayAppointments'] as List? ?? [])
-              .map((e) => AppointmentModel.fromJson(e as Map<String, dynamic>, viewedByDoctor: true))
-              .toList();
-
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async => ref.invalidate(_doctorDashboardProvider),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              children: [
-                if (!isVerified) ...[
-                  _VerificationBanner(),
-                  const SizedBox(height: 16),
+        body: dashboardAsync.when(
+          loading: () => const LoadingIndicator(),
+          error: (e, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(e.toString(), textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () => ref.invalidate(_doctorDashboardProvider),
+                    child: const Text('Retry'),
+                  ),
                 ],
-                _DoctorHeader(doctor: doctor, rating: stats?['averageRating']),
-                const SizedBox(height: 20),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.5,
-                  children: [
-                    _StatCard(
-                      icon: Icons.people_alt_rounded,
-                      label: 'Total Patients',
-                      value: '${stats?['totalPatients'] ?? 0}',
-                      tint: AppColors.tintBlue,
-                    ),
-                    _StatCard(
-                      icon: Icons.calendar_today_rounded,
-                      label: "Today's Appointments",
-                      value: '${stats?['todayAppointments'] ?? 0}',
-                      tint: AppColors.tintTeal,
-                    ),
-                    _StatCard(
-                      icon: Icons.currency_rupee_rounded,
-                      label: 'Total Revenue',
-                      value: '₹${stats?['totalRevenue'] ?? 0}',
-                      tint: AppColors.tintPurple,
-                    ),
-                    _StatCard(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: 'Completed',
-                      value: '${stats?['completedAppointments'] ?? 0}',
-                      tint: AppColors.tintOrange,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Today's Schedule", style: Theme.of(context).textTheme.titleLarge),
-                    TextButton(
-                      onPressed: () => context.push('/doctor/appointments'),
-                      child: const Text('View All'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (todayAppointments.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Column(
-                      children: [
-                        Text('📅', style: TextStyle(fontSize: 32)),
-                        SizedBox(height: 10),
-                        Text('No appointments scheduled for today', style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
-                      ],
-                    ),
-                  )
-                else
-                  ...todayAppointments.map((appt) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: AppointmentCard(
-                      appointment: appt,
-                      isDoctorView: true,
-                      onJoinCall: () => context.push('/consultation/${appt.id}'),
-                    ),
-                  )),
-              ],
+              ),
             ),
-          );
-        },
+          ),
+          data: (data) {
+            final doctor = data['doctor'] as Map<String, dynamic>?;
+            final stats = data['stats'] as Map<String, dynamic>?;
+            final isVerified = doctor?['isVerified'] == true;
+            final todayAppointments = (data['todayAppointments'] as List? ?? [])
+                .map((e) => AppointmentModel.fromJson(e as Map<String, dynamic>, viewedByDoctor: true))
+                .toList();
+
+            return RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async => ref.invalidate(_doctorDashboardProvider),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+                children: [
+                  if (!isVerified) ...[
+                    _VerificationBanner(),
+                    const SizedBox(height: 16),
+                  ],
+                  _DoctorHeader(doctor: doctor, rating: stats?['averageRating']),
+                  const SizedBox(height: 20),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.5,
+                    children: [
+                      _StatCard(
+                        icon: Icons.people_alt_rounded,
+                        label: 'Total Patients',
+                        value: '${stats?['totalPatients'] ?? 0}',
+                        tint: AppColors.tintBlue,
+                      ),
+                      _StatCard(
+                        icon: Icons.calendar_today_rounded,
+                        label: "Today's Appointments",
+                        value: '${stats?['todayAppointments'] ?? 0}',
+                        tint: AppColors.tintTeal,
+                      ),
+                      _StatCard(
+                        icon: Icons.currency_rupee_rounded,
+                        label: 'Total Revenue',
+                        value: '₹${stats?['totalRevenue'] ?? 0}',
+                        tint: AppColors.tintPurple,
+                      ),
+                      _StatCard(
+                        icon: Icons.check_circle_outline_rounded,
+                        label: 'Completed',
+                        value: '${stats?['completedAppointments'] ?? 0}',
+                        tint: AppColors.tintOrange,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Today's Schedule", style: Theme.of(context).textTheme.titleLarge),
+                      TextButton(
+                        onPressed: () => context.push('/doctor/appointments'),
+                        child: const Text('View All'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (todayAppointments.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.event_available_rounded, size: 32, color: AppColors.textMuted),
+                          SizedBox(height: 10),
+                          Text('No appointments scheduled for today', style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                        ],
+                      ),
+                    )
+                  else
+                    ...todayAppointments.map((appt) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: AppointmentCard(
+                        appointment: appt,
+                        isDoctorView: true,
+                        onJoinCall: () => context.push('/consultation/${appt.id}'),
+                      ),
+                    )),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

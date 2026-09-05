@@ -63,7 +63,7 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> {
       )
           : SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
           children: [
             _buildHeader(),
             const SizedBox(height: 20),
